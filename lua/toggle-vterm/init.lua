@@ -34,10 +34,13 @@ function M.toggle_terminal(orientation)
 			term.buf = vim.api.nvim_get_current_buf()              -- Save the terminal buffer
 			term.win = vim.api.nvim_get_current_win()              -- Save the terminal window
 			vim.api.nvim_buf_set_option(term.buf, "buflisted", false) -- Mark the terminal buffer as non-listable
+
+			-- Set keybinding for Ctrl+L to clear the terminal
+			vim.api.nvim_buf_set_keymap(term.buf, "t", "<C-l>", "<Cmd>clear<CR>", { noremap = true, silent = true })
 		end
-		vim.cmd("startinsert")                                   -- Enter Insert mode when opening the terminal
-		vim.wo.number = false                                    -- Disable line numbers
-		vim.wo.relativenumber = false                            -- Disable relative line numbers
+		vim.cmd("startinsert")      -- Enter Insert mode when opening the terminal
+		vim.wo.number = false       -- Disable line numbers
+		vim.wo.relativenumber = false -- Disable relative line numbers
 	end
 end
 

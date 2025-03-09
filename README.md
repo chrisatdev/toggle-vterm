@@ -16,7 +16,7 @@ Using [lazy.nvim](https://github.com/folke/lazy.nvim):
 
 ```lua
 {
-    "chrisatdev/toggle-vterm.nvim", -- Replace with your GitHub username or repository path
+    "chrisatdev/toggle-vterm.nvim",
     config = function()
         require("toggle-vterm").setup()
     end,
@@ -65,6 +65,7 @@ end, opts)
 - `<leader>th`: Toggle horizontal terminal.
 - `<leader>tv`: Toggle vertical terminal.
 - `<C-x>`: Exit terminal mode and return to Normal mode.
+- `<C-l>`: Clear the terminal screen (only in terminal mode).
 
 ## Contributing
 
