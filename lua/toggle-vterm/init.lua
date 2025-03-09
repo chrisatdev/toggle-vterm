@@ -37,6 +37,9 @@ function M.toggle_terminal(orientation)
 
 			-- Set keybinding for Ctrl+L to clear the terminal
 			vim.api.nvim_buf_set_keymap(term.buf, "t", "<C-l>", "<Cmd>clear<CR>", { noremap = true, silent = true })
+
+			-- Automatically close the terminal when the shell exits
+			vim.api.nvim_buf_set_option(term.buf, "term_close_on_exit", true)
 		end
 		vim.cmd("startinsert")      -- Enter Insert mode when opening the terminal
 		vim.wo.number = false       -- Disable line numbers
