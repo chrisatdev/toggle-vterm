@@ -16,7 +16,7 @@ Using [lazy.nvim](https://github.com/folke/lazy.nvim):
 
 ```lua
 {
-    "chrisatdev/toggle-vterm.nvim",
+    "chrisatdev/toggle-vterm",
     config = function()
         require("toggle-vterm").setup()
     end,
