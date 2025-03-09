@@ -53,7 +53,7 @@ Using [lazy.nvim](https://github.com/folke/lazy.nvim):
 }
 ```
 
-## Usage
+## Keybindings
 
 - `<leader>th`: Toggle horizontal terminal.
 - `<leader>tv`: Toggle vertical terminal.
