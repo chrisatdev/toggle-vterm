@@ -6,6 +6,7 @@ A Neovim plugin to manage multiple terminal windows with toggling functionality.
 
 - Open and hide horizontal and vertical terminal windows.
 - Reuse existing terminal buffers to keep processes running in the background.
+- Automatically close the terminal when the shell exits (e.g., when running `exit`).
 - Customizable keybindings.
 
 ## Installation
