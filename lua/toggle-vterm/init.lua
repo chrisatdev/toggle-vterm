@@ -37,6 +37,10 @@ function M.toggle_terminal(orientation)
 			elseif orientation == "vertical" and term.width then
 				vim.api.nvim_win_set_width(term.win, term.width)
 			end
+
+			-- Hide statusline for terminal windows
+			vim.api.nvim_win_set_option(term.win, "laststatus", 0)
+			vim.api.nvim_win_set_option(term.win, "statusline", "")
 		else
 			-- If there is no terminal buffer, create a new one
 			if orientation == "horizontal" then
@@ -54,6 +58,10 @@ function M.toggle_terminal(orientation)
 			else
 				term.width = vim.api.nvim_win_get_width(term.win)
 			end
+
+			-- Hide statusline for terminal windows
+			vim.api.nvim_win_set_option(term.win, "laststatus", 0)
+			vim.api.nvim_win_set_option(term.win, "statusline", "")
 
 			-- Set keybinding for Ctrl+L to clear the terminal
 			vim.api.nvim_buf_set_keymap(term.buf, "t", "<C-l>", "clear<CR>", { noremap = true, silent = true })
@@ -79,7 +87,6 @@ function M.toggle_terminal(orientation)
 		vim.cmd("startinsert")      -- Enter Insert mode when opening the terminal
 		vim.wo.number = false       -- Disable line numbers
 		vim.wo.relativenumber = false -- Disable relative line numbers
-		vim.wo.laststatus = false
 	end
 end
 
@@ -96,15 +103,47 @@ function M.save_terminal_dimensions()
 	end
 end
 
--- Restore terminal dimensions
+-- Restore terminal dimensions with more aggressive approach for vertical terminals
 function M.restore_terminal_dimensions()
 	for orientation, term in pairs(terminals) do
 		if term.win and vim.api.nvim_win_is_valid(term.win) then
 			if orientation == "horizontal" and term.height then
 				vim.api.nvim_win_set_height(term.win, term.height)
 			elseif orientation == "vertical" and term.width then
+				-- Más forzado para splits verticales
 				vim.api.nvim_win_set_width(term.win, term.width)
+				-- Intenta 3 veces con un pequeño retraso entre intentos para splits verticales
+				if orientation == "vertical" then
+					for i = 1, 3 do
+						vim.defer_fn(function()
+							if term.win and vim.api.nvim_win_is_valid(term.win) then
+								vim.api.nvim_win_set_width(term.win, term.width)
+							end
+						end, i * 50) -- Intervalos de 50ms, 100ms, 150ms
+					end
+				end
 			end
+
+			-- Re-apply statusline hiding (puede perderse en ciertos eventos)
+			vim.api.nvim_win_set_option(term.win, "laststatus", 0)
+			vim.api.nvim_win_set_option(term.win, "statusline", "")
+		end
+	end
+end
+
+-- Handle window resizing events for terminals
+function M.handle_win_resize()
+	-- Get current window and check if it's one of our terminal windows
+	local current_win = vim.api.nvim_get_current_win()
+	for orientation, term in pairs(terminals) do
+		if term.win == current_win then
+			-- Update stored dimensions
+			if orientation == "horizontal" then
+				term.height = vim.api.nvim_win_get_height(term.win)
+			else
+				term.width = vim.api.nvim_win_get_width(term.win)
+			end
+			break
 		end
 	end
 end
@@ -119,7 +158,7 @@ function M.setup()
 	})
 
 	-- Restore dimensions after buffer change events
-	vim.api.nvim_create_autocmd({ "BufEnter", "BufWinEnter" }, {
+	vim.api.nvim_create_autocmd({ "BufEnter", "BufWinEnter", "WinEnter" }, {
 		callback = function()
 			-- Use vim.defer_fn to run after the buffer has been fully loaded
 			vim.defer_fn(function()
@@ -128,14 +167,47 @@ function M.setup()
 		end,
 	})
 
-	-- Add specific hook for neo-tree file open events
-	-- This will capture when neo-tree opens files
+	-- Additional event specifically for neo-tree
 	vim.api.nvim_create_autocmd("User", {
 		pattern = "NeotreeBufferOpened",
 		callback = function()
 			vim.defer_fn(function()
 				M.restore_terminal_dimensions()
-			end, 50) -- Un retraso un poco mayor para neo-tree
+			end, 50) -- Un retraso mayor para neo-tree
+		end,
+	})
+
+	-- Handle window resize events
+	vim.api.nvim_create_autocmd("VimResized", {
+		callback = function()
+			vim.defer_fn(function()
+				M.restore_terminal_dimensions()
+			end, 20)
+		end,
+	})
+
+	-- Track manual window resizing
+	vim.api.nvim_create_autocmd("WinScrolled", {
+		callback = function()
+			M.handle_win_resize()
+		end,
+	})
+
+	-- Monitor fileopen events
+	vim.api.nvim_create_autocmd("FileType", {
+		callback = function()
+			vim.defer_fn(function()
+				M.restore_terminal_dimensions()
+			end, 20)
+		end,
+	})
+
+	-- Force statusline off for terminal buffers
+	vim.api.nvim_create_autocmd("TermOpen", {
+		callback = function()
+			local win = vim.api.nvim_get_current_win()
+			vim.api.nvim_win_set_option(win, "laststatus", 0)
+			vim.api.nvim_win_set_option(win, "statusline", "")
 		end,
 	})
 end
